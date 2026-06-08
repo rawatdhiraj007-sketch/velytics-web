@@ -476,6 +476,29 @@ export default function AppPage() {
     }catch{/* ignore */}
   };
 
+  const [reporting,setReporting]=useState(false);
+  const handleReport=async()=>{           // Full Excel report: all sheets + native charts
+    if(!file)return;
+    setReporting(true);
+    try{
+      const form=new FormData();
+      form.append("file",file); form.append("sheet",sheet);
+      form.append("filters",JSON.stringify(filters||{}));
+      form.append("edits",JSON.stringify(edits||[]));
+      form.append("clean_options",JSON.stringify(cleanOpts||{}));
+      if(tool==="analyze"&&selectedModule) form.append("module",selectedModule);
+      const res=await fetch(`${API}/report`,{method:"POST",body:form});
+      if(!res.ok) throw new Error("Report failed");
+      const blob=await res.blob();
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url; a.download=file.name.replace(/\.[^.]+$/,"")+"_report.xlsx";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }catch{ setError("Could not build the Excel report."); }
+    finally{ setReporting(false); }
+  };
+
   const handleScrub=async()=>{
     if(!file)return;
     try{
@@ -803,10 +826,17 @@ export default function AppPage() {
                     style={{border:"1px solid rgba(255,255,255,0.14)"}}>
                     <RefreshCw size={12} className={loading?"animate-spin":""}/> Refresh
                   </button>
+                  {tool!=="metadata"&&(
+                    <button onClick={handleReport} disabled={reporting||loading}
+                      className="flex items-center gap-1.5 text-xs font-bold text-white px-4 py-2 rounded-lg disabled:opacity-50 transition-all"
+                      style={{background:"#6366f1",boxShadow:"0 4px 12px rgba(99,102,241,0.35)"}}>
+                      <BarChart3 size={12} className={reporting?"animate-pulse":""}/> {reporting?"Building…":"Excel Report"}
+                    </button>
+                  )}
                   <button onClick={()=>handleDownload("xlsx")}
-                    className="flex items-center gap-1.5 text-xs font-bold text-white px-4 py-2 rounded-lg"
-                    style={{background:"#10b981",boxShadow:"0 4px 12px rgba(16,185,129,0.3)"}}>
-                    <FileSpreadsheet size={12}/> Clean Excel
+                    className="flex items-center gap-1.5 text-xs font-semibold text-slate-200 px-3 py-2 rounded-lg transition-all"
+                    style={{border:"1px solid rgba(255,255,255,0.14)"}}>
+                    <FileSpreadsheet size={12}/> Clean data
                   </button>
                   <button onClick={()=>handleDownload("csv")}
                     className="flex items-center gap-1.5 text-xs font-semibold text-slate-300 px-3 py-2 rounded-lg"
