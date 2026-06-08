@@ -380,6 +380,50 @@ function HealthGauge({score}:{score:number}) {
   );
 }
 
+// Tiny in-card trend line (sparkline), no axes/labels
+function MiniSpark({data,color="#818cf8"}:{data:number[];color?:string}) {
+  if(!data||data.length<2) return null;
+  const max=Math.max(...data), min=Math.min(...data), rng=(max-min)||1;
+  const W=120,H=28;
+  const pts=data.map((v,i)=>[i/(data.length-1)*W, H-((v-min)/rng)*(H-6)-3]);
+  const line=pts.map((p,i)=>`${i?'L':'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const area=`${line} L ${W},${H} L 0,${H} Z`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-7" preserveAspectRatio="none">
+      <defs><linearGradient id="spk" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity="0.3"/><stop offset="100%" stopColor={color} stopOpacity="0"/></linearGradient></defs>
+      <path d={area} fill="url(#spk)"/>
+      <path d={line} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx={pts[pts.length-1][0]} cy={pts[pts.length-1][1]} r="2" fill={color}/>
+    </svg>
+  );
+}
+
+// Rich KPI card: value + ▲/▼ delta colouring + optional progress bar / sparkline
+function KpiCard({k,kpis,spark,wide}:{k:string;kpis:any;spark?:number[];wide?:boolean}) {
+  const raw=kpis[k];
+  const isGrowth=/growth|\bmom\b|\byoy\b|change|delta/i.test(k) && typeof raw==="number";
+  const isProgress=/achievement|attainment|on.?track|target %/i.test(k) && typeof raw==="number";
+  const up=typeof raw==="number" && raw>=0;
+  return (
+    <div className={`${wide?"lg:col-span-2":""} rounded-xl p-3.5 flex flex-col gap-1.5`} style={DCARD}>
+      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-tight">{humanize(k)}</span>
+      {isGrowth ? (
+        <div className="text-xl font-black tracking-tight leading-none" style={{color:up?"#34d399":"#f87171"}}>
+          {up?"▲":"▼"} {Math.abs(raw)}%
+        </div>
+      ) : (
+        <div className="text-xl font-black text-white tracking-tight leading-none">{kpiValue(kpis,k)}</div>
+      )}
+      {isProgress && (
+        <div className="mt-0.5 h-1.5 rounded-full bg-white/10 overflow-hidden">
+          <div className="h-full rounded-full" style={{width:`${Math.max(2,Math.min(raw,100))}%`,background:raw>=100?"#34d399":raw>=80?"#fbbf24":"#f87171"}}/>
+        </div>
+      )}
+      {wide && spark && spark.length>=2 && <div className="mt-auto pt-1"><MiniSpark data={spark}/></div>}
+    </div>
+  );
+}
+
 export default function AppPage() {
   const [step,           setStep]           = useState<Step>("module");
   const [selectedModule, setSelectedModule] = useState<string|null>(null);
@@ -543,6 +587,10 @@ export default function AppPage() {
   const sections=Object.entries(result).filter(
     ([k,v])=>Array.isArray(v)&&v.length>0&&typeof (v as any[])[0]==="object"&&!["alerts","columns"].includes(k)
   ) as [string,any[]][];
+  // headline KPI gets a sparkline from the monthly trend section
+  const trendSection=sections.find(([_k,rows])=>rows[0]&&"month" in rows[0]);
+  const sparkData:number[]=trendSection?trendSection[1].map((r:any)=>Number(r.value)||0):[];
+  const headlineKey=kpis?(kpiKeys.find(k=>kpis[k+"_fmt"]!=null)||kpiKeys[0]):undefined;
 
   const dark = true;   // whole app matches the landing's dark aurora/glass
   return (
@@ -1051,13 +1099,11 @@ export default function AppPage() {
                     {tool!=="metadata"&&(<>
                     {/* KPI band — compact tiles like a Power BI report */}
                     {kpiKeys.length>0&&(
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 auto-rows-fr">
                         {kpiKeys.map(k=>(
-                          <div key={k} className="rounded-xl p-3.5 flex flex-col gap-1"
-                            style={{border:"1px solid rgba(255,255,255,0.08)",boxShadow:"0 8px 30px rgba(0,0,0,0.25)",background:"rgba(255,255,255,0.04)",backdropFilter:"blur(16px)"}}>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide leading-tight">{humanize(k)}</span>
-                            <div className="text-xl font-black text-white tracking-tight leading-none">{kpiValue(kpis,k)}</div>
-                          </div>
+                          <KpiCard key={k} k={k} kpis={kpis}
+                            wide={k===headlineKey&&sparkData.length>=2}
+                            spark={k===headlineKey?sparkData:undefined}/>
                         ))}
                       </div>
                     )}
