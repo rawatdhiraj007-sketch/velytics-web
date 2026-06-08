@@ -398,13 +398,14 @@ export default function AppPage() {
   const [error,          setError]          = useState<string|null>(null);
   const [focus,          setFocus]          = useState<{title:string;rows:any[]}|null>(null);   // zoom modal
   const [edits,          setEdits]          = useState<{row:number;col:string;value:any}[]>([]); // manual corrections
+  const [cleanOpts,      setCleanOpts]      = useState<any>({blanks:"leave"});   // cleaning-with-approval choices
 
   const handleDrop=useCallback((e:React.DragEvent)=>{
     e.preventDefault();setDragging(false);
     const f=e.dataTransfer.files[0];if(f)setFile(f);
   },[]);
 
-  const runAnalysis=async(sh=sheet, flt=filters, edts=edits)=>{
+  const runAnalysis=async(sh=sheet, flt=filters, edts=edits, copts=cleanOpts)=>{
     if(!file)return;
     setLoading(true);setError(null);
     try{
@@ -413,6 +414,7 @@ export default function AppPage() {
       form.append("sheet",sh);
       form.append("filters",JSON.stringify(flt||{}));
       form.append("edits",JSON.stringify(edts||[]));
+      form.append("clean_options",JSON.stringify(copts||{}));
       if(tool==="analyze"&&selectedModule) form.append("module",selectedModule); // chosen industry forces its pack
       const res=await fetch(`${API}/analyze`,{method:"POST",body:form});
       if(!res.ok){const e=await res.json();throw new Error(e.detail||"Analysis failed");}
@@ -436,10 +438,13 @@ export default function AppPage() {
   const applyEdits=()=>{ runAnalysis(sheet,filters,edits); };
   const discardEdits=()=>{ setEdits([]); runAnalysis(sheet,filters,[]); };
 
+  // ── Cleaning with approval: client chooses how to handle blank cells ──
+  const setBlanks=(mode:string)=>{ const next={...cleanOpts,blanks:mode}; setCleanOpts(next); runAnalysis(sheet,filters,edits,next); };
+
   const handleAnalyse=()=>{
     setStep("analysing");
-    setEdits([]);                       // fresh file → drop any prior corrections
-    runAnalysis(sheet,filters,[]).then(()=>setStep("results"));
+    setEdits([]); setCleanOpts({blanks:"leave"});   // fresh file → drop prior corrections & cleaning choices
+    runAnalysis(sheet,filters,[],{blanks:"leave"}).then(()=>setStep("results"));
   };
 
   const handleFilter=async()=>{          // Refresh button
@@ -772,7 +777,7 @@ export default function AppPage() {
                 </div>
               </div>
               <div className="p-4" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
-                <button onClick={()=>{setStep("module");setFile(null);setTool(null);setSelectedModule(null);setData(null);setActiveTab("overview");setSheet("");setFilters({});setEdits([]);setFocus(null);}}
+                <button onClick={()=>{setStep("module");setFile(null);setTool(null);setSelectedModule(null);setData(null);setActiveTab("overview");setSheet("");setFilters({});setEdits([]);setFocus(null);setCleanOpts({blanks:"leave"});}}
                   className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl transition-all hover:bg-indigo-50 hover:text-indigo-600 text-slate-400"
                   style={{border:"1px solid rgba(255,255,255,0.14)"}}>
                   <ArrowLeft size={12}/> New analysis
@@ -887,6 +892,30 @@ export default function AppPage() {
                               );
                             })}
                           </div>
+
+                          {/* Cleaning with approval — the client decides how to handle blanks */}
+                          {data?.raw_blanks>0&&(
+                            <div className="mt-4 pt-3 border-t border-white/10">
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <SlidersHorizontal size={12} className="text-indigo-300"/>
+                                <span className="text-[11px] font-bold text-white">How should we handle the {data.raw_blanks} blank cell{data.raw_blanks!==1?"s":""}?</span>
+                                <span className="text-[11px] text-slate-400">— your call</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {([["leave","Leave blank"],["zero","Fill with 0"],["mean","Average"],["median","Median"],["drop_rows","Remove rows"]] as [string,string][]).map(([mode,label])=>{
+                                  const active=(cleanOpts.blanks||"leave")===mode;
+                                  return (
+                                    <button key={mode} onClick={()=>setBlanks(mode)} disabled={loading}
+                                      className={`text-[11px] font-semibold px-3 py-1.5 rounded-lg transition-all disabled:opacity-50 ${active?"text-white":"text-slate-300 hover:text-white"}`}
+                                      style={active?{background:"#6366f1",boxShadow:"0 2px 8px rgba(99,102,241,0.35)"}:{border:"1px solid rgba(255,255,255,0.14)"}}>
+                                      {label}{mode==="leave"?" · best":""}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="text-[10px] text-slate-500 mt-1.5">Leaving blank keeps your totals honest. Filling or removing changes the numbers — and your choice is logged in the audit.</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
