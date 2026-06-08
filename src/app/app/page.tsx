@@ -816,8 +816,8 @@ export default function AppPage() {
               <div className="px-7 flex shrink-0" style={{background:"rgba(13,16,28,0.6)",backdropFilter:"blur(16px)",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
                 {([["overview","Overview",BarChart2],...(alerts.length?[["alerts","Alerts",Zap] as [Tab,string,React.ElementType]]:[]),...(data?.preview?.length?[["data","Data",Table2] as [Tab,string,React.ElementType]]:[])] as [Tab,string,React.ElementType][]).map(([id,label,Icon])=>(
                   <button key={id} onClick={()=>setActiveTab(id)}
-                    className={`flex items-center gap-1.5 px-4 py-3 text-xs font-semibold border-b-2 transition-all
-                      ${activeTab===id?"border-indigo-600 text-indigo-600":"border-transparent text-slate-400 hover:text-slate-300"}`}>
+                    className={`flex items-center gap-1.5 px-4 py-3 text-xs font-semibold border-b-2 transition-all outline-none focus:outline-none focus-visible:outline-none
+                      ${activeTab===id?"border-indigo-400 text-indigo-300":"border-transparent text-slate-400 hover:text-slate-200"}`}>
                     <Icon size={12}/>{label}{id==="alerts"?` (${alerts.length})`:""}{id==="data"&&edits.length?` · ${edits.length} edit${edits.length!==1?"s":""}`:""}
                   </button>
                 ))}
@@ -1035,14 +1035,13 @@ export default function AppPage() {
                       <span className="text-sm font-bold text-white">{alerts.length} alert{alerts.length!==1?"s":""}</span>
                     </div>
                     {alerts.map((a:any,i:number)=>{
-                      const c=a.type==="Critical"?"#dc2626":a.type==="Opportunity"?"#059669":a.type==="Warning"?"#d97706":"#6366f1";
-                      const bg=a.type==="Critical"?"#fef2f2":a.type==="Opportunity"?"#f0fdf4":a.type==="Warning"?"#fffbeb":"#eef2ff";
+                      const acc=a.type==="Critical"?"#f87171":a.type==="Opportunity"?"#34d399":a.type==="Warning"?"#fbbf24":"#818cf8";
                       return (
                         <div key={i} className="p-4 rounded-xl flex items-start gap-3"
-                          style={{background:bg,border:`1px solid ${c}30`,borderLeftWidth:3,borderLeftColor:c}}>
-                          <span className="text-xs font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5"
-                            style={{background:c+"18",color:c}}>{a.type}</span>
-                          <p className="text-sm text-slate-200 leading-relaxed">{a.text}</p>
+                          style={{background:`${acc}14`,border:`1px solid ${acc}33`,borderLeftWidth:3,borderLeftColor:acc,backdropFilter:"blur(8px)"}}>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5"
+                            style={{background:`${acc}26`,color:acc}}>{a.type}</span>
+                          <p className="text-sm text-slate-100 leading-relaxed">{a.text}</p>
                         </div>
                       );
                     })}
