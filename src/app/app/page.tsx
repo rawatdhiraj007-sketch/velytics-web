@@ -8,7 +8,8 @@ import {
   BarChart2, Zap, FileText, X, ArrowLeft,
   SlidersHorizontal, Download, RefreshCw, Sparkles, Database, FileSpreadsheet,
   PieChart, LineChart as LineIcon, BarChart3, AreaChart,
-  Maximize2, Check, Table2, Pencil
+  Maximize2, Check, Table2, Pencil,
+  Image as ImageIcon, Video as VideoIcon, Mail, ShieldCheck, EyeOff, Lock, Presentation
 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://velytics-api.onrender.com";
@@ -706,24 +707,34 @@ export default function AppPage() {
               </div>
 
               {tool==="metadata"&&(
-                <div className="mb-6 rounded-2xl p-4" style={{border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)"}}>
-                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2.5">What we can check — included</div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[{ic:"📊",label:"Excel / CSV"},{ic:"📄",label:"PDF"},{ic:"📝",label:"Word / PPT"},{ic:"📷",label:"Photos"}].map(t=>(
-                      <div key={t.label} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-200"
-                        style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)"}}>
-                        <span>{t.ic}</span>{t.label}
+                <div className="mb-6 rounded-2xl p-5" style={{border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(16px)"}}>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">What we can check — included</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {[{Ic:FileSpreadsheet,label:"Excel / CSV",c:"#10b981"},{Ic:FileText,label:"PDF",c:"#ef4444"},{Ic:Presentation,label:"Word / PPT",c:"#3b82f6"},{Ic:ImageIcon,label:"Photos",c:"#a855f7"}].map(t=>(
+                      <div key={t.label} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all hover:bg-white/[0.06]"
+                        style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)"}}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{background:`${t.c}1f`}}>
+                          <t.Ic size={16} style={{color:t.c}} strokeWidth={2}/>
+                        </div>
+                        <span className="text-[13px] font-semibold text-slate-100">{t.label}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="text-[11px] font-bold uppercase tracking-wide mt-3.5 mb-2.5 flex items-center gap-1.5 text-indigo-300/80">
-                    Advanced <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-200 tracking-normal">PRO</span>
+                  <div className="text-[11px] font-bold uppercase tracking-wider mt-4 mb-3 flex items-center gap-2 text-slate-400">
+                    Advanced
+                    <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full tracking-wide text-white"
+                      style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {[{ic:"🎥",label:"Video"},{ic:"🕵️",label:"Anonymize"},{ic:"⚖️",label:"GDPR report"},{ic:"📧",label:"Email / IP"}].map(t=>(
-                      <div key={t.label} title="Pro feature — coming with paid plans" className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-400"
-                        style={{background:"rgba(99,102,241,0.07)",border:"1px solid rgba(129,140,248,0.18)"}}>
-                        <span className="opacity-80">{t.ic}</span>{t.label}<span className="ml-auto text-[10px] opacity-70">🔒</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    {[{Ic:VideoIcon,label:"Video"},{Ic:EyeOff,label:"Anonymize"},{Ic:ShieldCheck,label:"GDPR report"},{Ic:Mail,label:"Email / IP"}].map(t=>(
+                      <div key={t.label} title="Pro feature — coming with paid plans"
+                        className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+                        style={{background:"linear-gradient(135deg,rgba(99,102,241,0.10),rgba(168,85,247,0.06))",border:"1px solid rgba(129,140,248,0.22)"}}>
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{background:"rgba(129,140,248,0.16)"}}>
+                          <t.Ic size={16} className="text-indigo-300" strokeWidth={2}/>
+                        </div>
+                        <span className="text-[13px] font-semibold text-slate-300">{t.label}</span>
+                        <Lock size={12} className="ml-auto text-indigo-300/60 shrink-0"/>
                       </div>
                     ))}
                   </div>
