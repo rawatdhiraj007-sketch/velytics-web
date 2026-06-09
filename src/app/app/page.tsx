@@ -746,7 +746,7 @@ export default function AppPage() {
                     <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full tracking-wide text-white" style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {[{Ic:VideoIcon,label:"Video",live:true,accept:".mp4,.mov,.m4v,.avi,.mkv,.webm"},{Ic:EyeOff,label:"Anonymize"},{Ic:ShieldCheck,label:"GDPR report"},{Ic:Mail,label:"Email / IP"}].map(t=>(
+                    {[{Ic:VideoIcon,label:"Video",live:true,accept:".mp4,.mov,.m4v,.avi,.mkv,.webm"},{Ic:Mail,label:"Email / IP",live:true,accept:".eml,.msg"},{Ic:EyeOff,label:"Anonymize"},{Ic:ShieldCheck,label:"GDPR report"}].map(t=>(
                       t.live?(
                         <label key={t.label} className="relative cursor-pointer flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all hover:-translate-y-0.5"
                           style={{background:"linear-gradient(135deg,rgba(99,102,241,0.14),rgba(168,85,247,0.10))",border:"1px solid rgba(129,140,248,0.35)"}}>
@@ -805,7 +805,7 @@ export default function AppPage() {
                     <div className="text-sm text-slate-400 mb-5">or click to browse</div>
                     <label className="cursor-pointer inline-flex items-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl text-sm bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/30">
                       <UploadCloud size={16}/> Browse files
-                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif,.pdf,.docx,.pptx,.mp4,.mov,.m4v,.avi,.mkv,.webm":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
+                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif,.pdf,.docx,.pptx,.mp4,.mov,.m4v,.avi,.mkv,.webm,.eml,.msg":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
                     </label>
                   </div>
                 )}
@@ -1203,11 +1203,11 @@ export default function AppPage() {
                                 <p className="text-[11px] text-slate-400">This photo has no hidden metadata to remove — it's already safe to share.</p>
                               )}
                             </div>
-                          ):(footprint.kind==="pdf"||footprint.kind==="document")?(
+                          ):(footprint.kind==="pdf"||footprint.kind==="document"||footprint.kind==="email")?(
                             <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
                               {footprint.details&&Object.keys(footprint.details).length>0&&(
                                 <div className="mb-3">
-                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Document details</div>
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">{footprint.kind==="email"?"Email details":"Document details"}</div>
                                   <div className="grid grid-cols-2 gap-x-4 gap-y-1">
                                     {Object.entries(footprint.details).map(([k,v]:any)=>(
                                       <div key={k} className="flex justify-between gap-2 text-[11px]">
@@ -1218,7 +1218,7 @@ export default function AppPage() {
                                   </div>
                                 </div>
                               )}
-                              {/\.(pdf|docx|pptx)$/i.test(file?.name||"")&&(
+                              {/\.(pdf|docx|pptx|eml|msg)$/i.test(file?.name||"")&&(
                                 <button onClick={handleScrub} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-lg" style={{background:"#10b981"}}>
                                   <Sparkles size={12}/> Download cleaned file
                                 </button>
@@ -1226,6 +1226,8 @@ export default function AppPage() {
                               <p className="mt-2 text-[10px] text-slate-500">
                                 {footprint.kind==="pdf"
                                   ? "Removes document info (author/software), JavaScript, attachments & annotations. ⚠️ Blacked-out (failed-redaction) text can't be auto-fixed — re-do it in your PDF editor."
+                                  : footprint.kind==="email"
+                                  ? "Removes the technical headers (Received, IP, Message-ID, X-*) and Bcc, then gives you a clean .eml. From/To/Subject are kept."
                                   : "Removes author, company & edit-history. ⚠️ Tracked changes & comments are flagged above — clear those in your editor (Accept all changes / Delete comments)."}
                                 {" "}Nothing is stored on our servers.
                               </p>
