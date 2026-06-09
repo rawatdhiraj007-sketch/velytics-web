@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import {
   TrendingUp, Package, Users, DollarSign, ShoppingCart,
@@ -13,6 +13,31 @@ import {
 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://velytics-api.onrender.com";
+
+// Show the privacy law that actually applies to the visitor's country.
+// Same scan everywhere — we just name the right regulation.
+const REGION_LAW: Record<string,{short:string;full:string}> = {
+  EU: { short:"GDPR",     full:"the EU GDPR" },
+  GB: { short:"UK GDPR",  full:"the UK GDPR / Data Protection Act" },
+  IN: { short:"DPDP Act", full:"India's DPDP Act, 2023" },
+  US: { short:"CCPA",     full:"the CCPA / CPRA (US)" },
+  BR: { short:"LGPD",     full:"Brazil's LGPD" },
+  CA: { short:"PIPEDA",   full:"Canada's PIPEDA" },
+  AU: { short:"Privacy Act", full:"Australia's Privacy Act (APPs)" },
+};
+function detectRegion(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    if (/Kolkata|Calcutta/i.test(tz)) return "IN";
+    if (tz === "Europe/London" || /Belfast|Dublin/i.test(tz)) return "GB";
+    if (tz.startsWith("Europe/")) return "EU";
+    if (/Sao_Paulo|Brazil|Recife|Fortaleza|Manaus|Bahia/i.test(tz)) return "BR";
+    if (tz.startsWith("Australia/")) return "AU";
+    if (/Toronto|Vancouver|Edmonton|Winnipeg|Halifax|Montreal|Regina|St_Johns/i.test(tz)) return "CA";
+    if (tz.startsWith("America/")) return "US";
+  } catch {}
+  return "EU";
+}
 
 const MODULES = [
   { id:"Sales Intelligence",     Icon:TrendingUp,     name:"Sales",         desc:"Revenue, targets & forecasts",   color:"#6366f1", bg:"#eef2ff" },
@@ -558,12 +583,17 @@ export default function AppPage() {
     setTypeErr(""); setProNotice(""); setFile(f);
   };
 
+  const [lawRegion,setLawRegion]=useState("EU");
+  useEffect(()=>{ setLawRegion(detectRegion()); },[]);
+  const law=REGION_LAW[lawRegion]||REGION_LAW.EU;
+
   const [genReport,setGenReport]=useState(false);
   const handlePrivacyReport=async()=>{          // downloadable Privacy & Compliance PDF
     if(!file)return;
     setGenReport(true);
     try{
       const form=new FormData(); form.append("file",file);
+      form.append("law", law.short); form.append("law_full", law.full);
       const res=await fetch(`${API}/privacy-report`,{method:"POST",body:form});
       if(!res.ok) throw new Error();
       const cd=res.headers.get("content-disposition")||"";
@@ -1133,11 +1163,11 @@ export default function AppPage() {
                       const acc=lv==="high"?"#f87171":lv==="medium"?"#fbbf24":"#34d399";
                       return (
                         <div className="rounded-2xl p-4 flex items-start gap-3" style={{border:`1px solid ${acc}40`,background:`${acc}14`,backdropFilter:"blur(8px)"}}>
-                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5" style={{background:`${acc}26`,color:acc}}>GDPR</span>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5" style={{background:`${acc}26`,color:acc}}>{law.short}</span>
                           <div>
-                            <div className="text-sm font-semibold text-white">{footprint.gdpr.verdict}</div>
+                            <div className="text-sm font-semibold text-white">{String(footprint.gdpr.verdict||"").replace(/GDPR/g, law.short)}</div>
                             <div className="text-[11px] text-slate-300 mt-1">
-                              {footprint.gdpr.categories?.length>0?`Personal data found: ${footprint.gdpr.categories.join(", ")}. `:""}{footprint.gdpr.advice}
+                              {footprint.gdpr.categories?.length>0?`Personal data found: ${footprint.gdpr.categories.join(", ")}. `:""}{String(footprint.gdpr.advice||"").replace(/GDPR/g, law.short)}
                             </div>
                           </div>
                         </div>
