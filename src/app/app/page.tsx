@@ -682,37 +682,60 @@ export default function AppPage() {
         {/* STEP 1 */}
         {step==="module"&&(
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-14">
-            <div className="max-w-5xl w-full">
-              <div className="text-center mb-9 float-up">
-                <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-3">What do you want to analyse?</h1>
-                <p className="text-slate-400 font-medium">Pick your industry — we tailor the report. Or inspect your data's structure.</p>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-                {MODULES.map((m,i)=>(
-                  <button key={m.id} onClick={()=>{setTool("analyze");setSelectedModule(m.name);setStep("upload");}}
-                    className="group glass float-up text-left p-4 rounded-2xl transition-all hover:-translate-y-1 hover:bg-white/[0.08] hover:border-white/20"
-                    style={{animationDelay:`${i*0.025}s`}}>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
-                      style={{background:`${m.color}1f`,border:`1px solid ${m.color}33`}}>
-                      <m.Icon size={20} style={{color:m.color}} strokeWidth={1.75}/>
+            {tool!=="analyze"?(
+              /* ── Choose your tool: 2 products ── */
+              <div className="max-w-4xl w-full">
+                <div className="text-center mb-10 float-up">
+                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-3">What do you want to do?</h1>
+                  <p className="text-slate-400 font-medium">Pick a tool — analyse your data, or check it for hidden private info.</p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-5">
+                  <button onClick={()=>{setTool("analyze");setSelectedModule(null);}}
+                    className="group glass float-up text-left p-7 rounded-3xl transition-all hover:-translate-y-1 hover:bg-white/[0.08] hover:border-white/20">
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 bg-gradient-to-br from-indigo-500 to-violet-500 shadow-lg shadow-indigo-500/40 transition-transform group-hover:scale-105">
+                      <BarChart3 size={26} className="text-white"/>
                     </div>
-                    <div className="font-bold text-white text-sm mb-0.5">{m.name}</div>
-                    <div className="text-[11px] text-slate-400 leading-snug">{m.desc}</div>
+                    <div className="font-black text-white text-xl mb-1.5">Data Scientist</div>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-4">Auto-clean any business file and get the dashboard your industry needs — KPIs, trends, forecasts, alerts &amp; an Excel report.</p>
+                    <div className="text-xs font-bold text-indigo-300 flex items-center gap-1">12 industry models <ChevronRight size={14}/></div>
                   </button>
-                ))}
+                  <button onClick={()=>{setTool("metadata");setSelectedModule(null);setStep("upload");}}
+                    className="group glass float-up text-left p-7 rounded-3xl transition-all hover:-translate-y-1 hover:bg-white/[0.08] hover:border-white/20" style={{animationDelay:"0.05s"}}>
+                    <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 bg-gradient-to-br from-emerald-500 to-teal-500 shadow-lg shadow-emerald-500/40 transition-transform group-hover:scale-105">
+                      <ShieldCheck size={26} className="text-white"/>
+                    </div>
+                    <div className="font-black text-white text-xl mb-1.5">Metadata &amp; Privacy</div>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-4">See &amp; remove the hidden data in your files — GPS, authors, IP addresses, redaction leaks — before you share. GDPR-safe.</p>
+                    <div className="text-xs font-bold text-emerald-300 flex items-center gap-1">6 file types <ChevronRight size={14}/></div>
+                  </button>
+                </div>
               </div>
-              <button onClick={()=>{setTool("metadata");setSelectedModule(null);setStep("upload");}}
-                className="group glass float-up w-full text-left mt-4 p-5 rounded-2xl flex items-center gap-4 transition-all hover:-translate-y-0.5 hover:bg-white/[0.08] hover:border-white/20">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{background:"#0ea5e91f",border:"1px solid #0ea5e933"}}>
-                  <Database size={24} style={{color:"#0ea5e9"}} strokeWidth={1.75}/>
+            ):(
+              /* ── Data Scientist: pick an industry ── */
+              <div className="max-w-5xl w-full">
+                <button onClick={()=>{setTool(null);setSelectedModule(null);}} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white mb-6 transition-colors">
+                  <ArrowLeft size={14}/> Back
+                </button>
+                <div className="text-center mb-9 float-up">
+                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-3">Pick your industry</h1>
+                  <p className="text-slate-400 font-medium">We tailor the dashboard to your field — or just upload any sheet.</p>
                 </div>
-                <div>
-                  <div className="font-black text-white text-base">Metadata &amp; Privacy</div>
-                  <div className="text-sm text-slate-400">Inspect columns, data quality &amp; remove hidden footprint (GDPR-safe)</div>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                  {MODULES.map((m,i)=>(
+                    <button key={m.id} onClick={()=>{setSelectedModule(m.name);setStep("upload");}}
+                      className="group glass float-up text-left p-4 rounded-2xl transition-all hover:-translate-y-1 hover:bg-white/[0.08] hover:border-white/20"
+                      style={{animationDelay:`${i*0.025}s`}}>
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform group-hover:scale-110"
+                        style={{background:`${m.color}1f`,border:`1px solid ${m.color}33`}}>
+                        <m.Icon size={20} style={{color:m.color}} strokeWidth={1.75}/>
+                      </div>
+                      <div className="font-bold text-white text-sm mb-0.5">{m.name}</div>
+                      <div className="text-[11px] text-slate-400 leading-snug">{m.desc}</div>
+                    </button>
+                  ))}
                 </div>
-                <ChevronRight size={18} className="ml-auto text-slate-500"/>
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -720,7 +743,7 @@ export default function AppPage() {
         {step==="upload"&&(
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
             <div className="max-w-xl w-full float-up">
-              <button onClick={()=>setStep("module")} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white mb-8 transition-colors">
+              <button onClick={()=>{setStep("module"); if(tool==="metadata") setTool(null);}} className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-white mb-8 transition-colors">
                 <ArrowLeft size={14}/> Back
               </button>
               <div className="text-center mb-8">
