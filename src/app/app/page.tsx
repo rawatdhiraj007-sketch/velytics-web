@@ -431,6 +431,7 @@ export default function AppPage() {
   const [scrubOpts,      setScrubOpts]      = useState<any>({identity:true,hidden_sheets:true,comments:true,unhide:true,redact_pii:true});
   const [removeCols,     setRemoveCols]     = useState<string[]>([]);   // manual: columns to delete
   const [removeWords,    setRemoveWords]    = useState("");             // manual: words to blank (comma-separated)
+  const [photoStrip,     setPhotoStrip]     = useState<any>({gps:true,camera:true,owner:true,date:true}); // image: what to remove
   const [filters,        setFilters]        = useState<any>({});   // {col: {values:[...]} | {min,max}}
   const [file,           setFile]           = useState<File|null>(null);
   const [dragging,       setDragging]       = useState(false);
@@ -552,6 +553,7 @@ export default function AppPage() {
       Object.entries(scrubOpts).forEach(([k,v])=>form.append(k, v?"true":"false"));
       form.append("remove_columns", JSON.stringify(removeCols));
       form.append("remove_words", JSON.stringify(removeWords.split(",").map(w=>w.trim()).filter(Boolean)));
+      form.append("strip_categories", JSON.stringify(Object.keys(photoStrip).filter(k=>photoStrip[k])));
       const res=await fetch(`${API}/scrub`,{method:"POST",body:form});
       if(!res.ok) throw new Error("Scrub failed");
       const blob=await res.blob();
@@ -725,7 +727,7 @@ export default function AppPage() {
                     <div className="text-sm text-slate-400 mb-5">or click to browse</div>
                     <label className="cursor-pointer inline-flex items-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl text-sm bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/30">
                       <UploadCloud size={16}/> Browse files
-                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
+                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
                     </label>
                   </div>
                 )}
@@ -1063,10 +1065,28 @@ export default function AppPage() {
                                   📍 See exactly where this photo was taken (Google Maps) →
                                 </a>
                               )}
-                              <button onClick={handleScrub} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-lg" style={{background:"#10b981"}}>
-                                <Sparkles size={12}/> Download cleaned photo
-                              </button>
-                              <p className="mt-2 text-[10px] text-slate-500">Removes ALL hidden data (GPS, camera, owner, date). The photo looks identical — safe to post or share.</p>
+                              {(footprint.categories_present||[]).length>0?(
+                                <>
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Choose what to remove</div>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mb-3">
+                                    {(footprint.categories_present||[]).map((cat:string)=>{
+                                      const lbl:any={gps:"📍 GPS location",camera:"📷 Camera / device",owner:"👤 Owner / copyright",date:"🕓 Date taken"};
+                                      return (
+                                        <label key={cat} className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                                          <input type="checkbox" checked={!!photoStrip[cat]} onChange={e=>setPhotoStrip({...photoStrip,[cat]:e.target.checked})}/>
+                                          {lbl[cat]||cat}
+                                        </label>
+                                      );
+                                    })}
+                                  </div>
+                                  <button onClick={handleScrub} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-lg" style={{background:"#10b981"}}>
+                                    <Sparkles size={12}/> Clean up &amp; download photo
+                                  </button>
+                                  <p className="mt-2 text-[10px] text-slate-500">Only the items you tick are removed. The photo looks identical — safe to post or share. Nothing is stored on our servers.</p>
+                                </>
+                              ):(
+                                <p className="text-[11px] text-slate-400">This photo has no hidden metadata to remove — it's already safe to share.</p>
+                              )}
                             </div>
                           ):(
                           <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
