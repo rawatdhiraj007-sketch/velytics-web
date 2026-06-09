@@ -557,7 +557,9 @@ export default function AppPage() {
       const blob=await res.blob();
       const url=URL.createObjectURL(blob);
       const a=document.createElement("a");
-      a.href=url; a.download=file.name.replace(/\.[^.]+$/,"")+"_safe.xlsx";
+      const isImg=/\.(jpe?g|png|tiff?|webp|bmp)$/i.test(file.name);
+      const ext=isImg?(file.name.match(/\.([a-z0-9]+)$/i)?.[1]||"jpg"):"xlsx";
+      a.href=url; a.download=file.name.replace(/\.[^.]+$/,"")+(isImg?"_cleaned.":"_safe.")+ext;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     }catch{/* ignore */}
@@ -698,7 +700,7 @@ export default function AppPage() {
                   <span className="text-sm font-semibold text-slate-200">{pickViz.name}</span>
                 </div>
                 <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Upload your data</h1>
-                <p className="text-slate-400 text-sm">Excel · CSV · JSON · Any size</p>
+                <p className="text-slate-400 text-sm">{tool==="metadata"?"Excel · CSV · JSON · Photos (JPG / PNG)":"Excel · CSV · JSON · Any size"}</p>
               </div>
               <div onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={handleDrop}
                 className={`rounded-2xl p-14 text-center transition-all border-2 border-dashed
@@ -723,7 +725,7 @@ export default function AppPage() {
                     <div className="text-sm text-slate-400 mb-5">or click to browse</div>
                     <label className="cursor-pointer inline-flex items-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl text-sm bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/30">
                       <UploadCloud size={16}/> Browse files
-                      <input type="file" accept=".xlsx,.csv,.json" className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
+                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
                     </label>
                   </div>
                 )}
@@ -1035,7 +1037,7 @@ export default function AppPage() {
                         </div>
                         <div>
                           <div className="mb-3">
-                            <span className="font-bold text-white text-sm">Hidden footprint in this file</span>
+                            <span className="font-bold text-white text-sm">{footprint.kind==="image"?"What this photo secretly reveals":"Hidden footprint in this file"}</span>
                           </div>
                           <div className="space-y-2 max-h-56 overflow-auto pr-1">
                             {(footprint.risks||[]).map((it:any,i:number)=>{
@@ -1052,7 +1054,21 @@ export default function AppPage() {
                             })}
                           </div>
 
-                          {/* Choose what to remove — the "filter" */}
+                          {/* Action area — image vs spreadsheet */}
+                          {footprint.kind==="image"?(
+                            <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+                              {footprint.maps&&(
+                                <a href={footprint.maps} target="_blank" rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300 hover:text-indigo-200 mb-3">
+                                  📍 See exactly where this photo was taken (Google Maps) →
+                                </a>
+                              )}
+                              <button onClick={handleScrub} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-lg" style={{background:"#10b981"}}>
+                                <Sparkles size={12}/> Download cleaned photo
+                              </button>
+                              <p className="mt-2 text-[10px] text-slate-500">Removes ALL hidden data (GPS, camera, owner, date). The photo looks identical — safe to post or share.</p>
+                            </div>
+                          ):(
                           <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
                             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Choose what to remove</div>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
@@ -1101,6 +1117,7 @@ export default function AppPage() {
                               <p className="mt-2 text-[11px] text-slate-400">Safe-copy download is available for .xlsx files.</p>
                             )}
                           </div>
+                          )}
                         </div>
                       </div>
                     )}
