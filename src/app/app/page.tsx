@@ -558,6 +558,23 @@ export default function AppPage() {
     setTypeErr(""); setProNotice(""); setFile(f);
   };
 
+  const [genReport,setGenReport]=useState(false);
+  const handlePrivacyReport=async()=>{          // downloadable Privacy & Compliance PDF
+    if(!file)return;
+    setGenReport(true);
+    try{
+      const form=new FormData(); form.append("file",file);
+      const res=await fetch(`${API}/privacy-report`,{method:"POST",body:form});
+      if(!res.ok) throw new Error();
+      const cd=res.headers.get("content-disposition")||"";
+      const fn=/filename="?([^"]+)"?/.exec(cd)?.[1];
+      const blob=await res.blob(); const url=URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download=fn||(file.name.replace(/\.[^.]+$/,"")+"_privacy_report.pdf");
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }catch{ setError("Could not build the report."); }
+    finally{ setGenReport(false); }
+  };
+
   const handleScrub=async()=>{
     if(!file)return;
     try{
@@ -1101,6 +1118,16 @@ export default function AppPage() {
                         </div>
                       );
                     })()}
+
+                    {/* Downloadable Privacy & Compliance Report (PRO) */}
+                    {tool==="metadata"&&footprint?.gdpr&&(
+                      <button onClick={handlePrivacyReport} disabled={genReport}
+                        className="w-full flex items-center justify-center gap-2 text-sm font-bold text-white px-4 py-3 rounded-xl disabled:opacity-50 transition-all hover:-translate-y-0.5"
+                        style={{background:"linear-gradient(110deg,#6366f1,#a855f7)",boxShadow:"0 4px 16px rgba(99,102,241,0.35)"}}>
+                        <FileText size={15}/> {genReport?"Building report…":"Download Privacy & Compliance Report"}
+                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-white/25">PRO</span>
+                      </button>
+                    )}
 
                     {/* Metadata (Privacy) tool: hidden-footprint report */}
                     {tool==="metadata"&&footprint&&(
