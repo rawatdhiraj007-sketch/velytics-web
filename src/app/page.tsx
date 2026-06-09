@@ -62,6 +62,8 @@ const PRICE_TABLE: Record<string, { cur: string; a: number; p: number; c: number
   IN: { cur: "₹", a: 1999, p: 1299, c: 2499, note: "Prices in INR · billed monthly" },
 };
 const REGION_LABEL: Record<string, string> = { US: "🌍 USD", EU: "🇪🇺 EUR", GB: "🇬🇧 GBP", IN: "🇮🇳 INR" };
+// The privacy law shown in the hero stat — matches the tool, named per region.
+const REGION_LAW_SHORT: Record<string, string> = { US: "CCPA", EU: "GDPR", GB: "UK GDPR", IN: "DPDP Act" };
 
 function detectRegion(): string {
   try {
@@ -148,7 +150,7 @@ export default function Home() {
             </a>
           </div>
           <div className="float-up flex flex-wrap items-center justify-center gap-8 text-sm font-medium text-slate-500" style={{ animationDelay: "0.2s" }}>
-            {[["12", "Industries"], ["6", "File types scanned"], ["GDPR", "Safe to share"], ["60s", "To insight"]].map(([n, l]) => (
+            {[["12", "Industries"], ["6", "File types scanned"], [REGION_LAW_SHORT[region] || "GDPR", "Safe to share"], ["1 min", "To insight"]].map(([n, l]) => (
               <div key={l} className="flex items-center gap-2">
                 <span className="text-lg font-black text-white">{n}</span>
                 <span>{l}</span>
