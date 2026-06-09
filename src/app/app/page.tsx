@@ -433,6 +433,7 @@ export default function AppPage() {
   const [removeCols,     setRemoveCols]     = useState<string[]>([]);   // manual: columns to delete
   const [removeWords,    setRemoveWords]    = useState("");             // manual: words to blank (comma-separated)
   const [photoStrip,     setPhotoStrip]     = useState<any>({gps:true,camera:true,owner:true,date:true}); // image: what to remove
+  const [proNotice,      setProNotice]      = useState("");   // metadata: clicked a Pro (locked) capability
   const [filters,        setFilters]        = useState<any>({});   // {col: {values:[...]} | {min,max}}
   const [file,           setFile]           = useState<File|null>(null);
   const [dragging,       setDragging]       = useState(false);
@@ -706,42 +707,56 @@ export default function AppPage() {
                 <p className="text-slate-400 text-sm">{tool==="metadata"?"Excel · PDF · Word · PowerPoint · Photos — we find & remove hidden data":"Excel · CSV · JSON · Any size"}</p>
               </div>
 
-              {tool==="metadata"&&(
-                <div className="mb-6 rounded-2xl p-5" style={{border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(16px)"}}>
-                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">What we can check — included</div>
+              {/* ── METADATA: clickable type tabs ARE the uploader ── */}
+              {tool==="metadata"&&!file&&(
+                <div className="rounded-2xl p-5" style={{border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)",backdropFilter:"blur(16px)"}}>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">Pick a file type to check</div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {[{Ic:FileSpreadsheet,label:"Excel / CSV",c:"#10b981"},{Ic:FileText,label:"PDF",c:"#ef4444"},{Ic:Presentation,label:"Word / PPT",c:"#3b82f6"},{Ic:ImageIcon,label:"Photos",c:"#a855f7"}].map(t=>(
-                      <div key={t.label} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl transition-all hover:bg-white/[0.06]"
+                    {[{Ic:FileSpreadsheet,label:"Excel / CSV",c:"#10b981",accept:".xlsx,.csv,.json"},
+                      {Ic:FileText,label:"PDF",c:"#ef4444",accept:".pdf"},
+                      {Ic:Presentation,label:"Word / PPT",c:"#3b82f6",accept:".docx,.pptx"},
+                      {Ic:ImageIcon,label:"Photos",c:"#a855f7",accept:".jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif"}].map(t=>(
+                      <label key={t.label} className="cursor-pointer flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all hover:bg-white/[0.07] hover:-translate-y-0.5"
                         style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.09)"}}>
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{background:`${t.c}1f`}}>
-                          <t.Ic size={16} style={{color:t.c}} strokeWidth={2}/>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:`${t.c}1f`}}>
+                          <t.Ic size={19} style={{color:t.c}} strokeWidth={2}/>
                         </div>
                         <span className="text-[13px] font-semibold text-slate-100">{t.label}</span>
-                      </div>
+                        <input type="file" accept={t.accept} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
+                      </label>
                     ))}
                   </div>
                   <div className="text-[11px] font-bold uppercase tracking-wider mt-4 mb-3 flex items-center gap-2 text-slate-400">
                     Advanced
-                    <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full tracking-wide text-white"
-                      style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
+                    <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full tracking-wide text-white" style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {[{Ic:VideoIcon,label:"Video"},{Ic:EyeOff,label:"Anonymize"},{Ic:ShieldCheck,label:"GDPR report"},{Ic:Mail,label:"Email / IP"}].map(t=>(
-                      <div key={t.label} title="Pro feature — coming with paid plans"
-                        className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
+                      <button key={t.label} onClick={()=>setProNotice(t.label)}
+                        className="relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all hover:-translate-y-0.5"
                         style={{background:"linear-gradient(135deg,rgba(99,102,241,0.10),rgba(168,85,247,0.06))",border:"1px solid rgba(129,140,248,0.22)"}}>
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{background:"rgba(129,140,248,0.16)"}}>
-                          <t.Ic size={16} className="text-indigo-300" strokeWidth={2}/>
+                        <Lock size={11} className="absolute top-2 right-2 text-indigo-300/60"/>
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:"rgba(129,140,248,0.16)"}}>
+                          <t.Ic size={19} className="text-indigo-300" strokeWidth={2}/>
                         </div>
                         <span className="text-[13px] font-semibold text-slate-300">{t.label}</span>
-                        <Lock size={12} className="ml-auto text-indigo-300/60 shrink-0"/>
-                      </div>
+                      </button>
                     ))}
                   </div>
+                  {proNotice&&(
+                    <div className="mt-3 p-3 rounded-xl text-xs text-slate-200 flex items-center gap-2" style={{background:"rgba(99,102,241,0.12)",border:"1px solid rgba(129,140,248,0.28)"}}>
+                      <Lock size={13} className="text-indigo-300 shrink-0"/>
+                      <span><strong className="text-white">{proNotice}</strong> is a Pro feature — coming with paid plans. Everything in <strong className="text-white">Included</strong> is free to use now.</span>
+                    </div>
+                  )}
+                  <p className="mt-3 text-[11px] text-slate-500 text-center">or drop any file below</p>
                 </div>
               )}
+
+              {/* ── Dropzone: analyze tool always; metadata only as a fallback / when a file is selected ── */}
+              {(tool!=="metadata"||file)&&(
               <div onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={handleDrop}
-                className={`rounded-2xl p-14 text-center transition-all border-2 border-dashed
+                className={`rounded-2xl ${tool==="metadata"&&!file?"p-6 mt-3":"p-14"} text-center transition-all border-2 border-dashed
                   ${dragging?"border-indigo-400 bg-indigo-500/10":file?"border-emerald-400 bg-emerald-500/10":"border-white/15 bg-white/[0.03] hover:border-white/30"}`}>
                 {file?(
                   <div>
@@ -768,6 +783,7 @@ export default function AppPage() {
                   </div>
                 )}
               </div>
+              )}
               <div className="glass flex items-center gap-3 mt-4 p-4 rounded-xl text-sm text-slate-300">
                 <span>🔒</span>
                 <span>Processed in memory · <strong className="text-white">never stored</strong> · deleted immediately</span>
