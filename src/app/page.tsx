@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   TrendingUp, Package, Users, DollarSign, ShoppingCart, Activity,
   Factory, Megaphone, Truck, Landmark, UtensilsCrossed, GraduationCap,
@@ -53,16 +54,42 @@ const STEPS = [
   { n: "04", title: "Decide", desc: "Download a dashboard report, or a clean, safe-to-share copy of your file.", icon: "→" },
 ];
 
-const PRICING = [
-  { name: "Free", price: "€0", period: "forever", highlight: false, cta: "Start free",
-    features: ["All 12 industry dashboards", "Auto-clean + data-health score", "Privacy scan & report — every file type", "Basic metadata removal", "Excel / CSV export"] },
-  { name: "Pro", price: "€29", period: "/month", highlight: true, cta: "Start free trial",
-    features: ["Everything in Free", "Anonymize — keep data usable", "Video & Email metadata cleaning", "Privacy & Compliance reports (PDF)", "Excel reports with charts", "Unlimited files · priority support"] },
-  { name: "Business", price: "€99", period: "/month", highlight: false, cta: "Contact sales",
-    features: ["Everything in Pro", "Up to 5 team seats", "Batch / bulk processing", "GDPR compliance exports", "Dedicated support"] },
+// Location-based pricing — each region pays in its own currency at a fair local rate.
+const PRICE_TABLE: Record<string, { cur: string; a: number; p: number; c: number; note: string }> = {
+  US: { cur: "$", a: 59,   p: 39,   c: 79,   note: "Prices in USD · billed monthly" },
+  EU: { cur: "€", a: 59,   p: 39,   c: 79,   note: "Prices in EUR · excl. VAT" },
+  GB: { cur: "£", a: 49,   p: 35,   c: 69,   note: "Prices in GBP · billed monthly" },
+  IN: { cur: "₹", a: 1999, p: 1299, c: 2499, note: "Prices in INR · billed monthly" },
+};
+const REGION_LABEL: Record<string, string> = { US: "🌍 USD", EU: "🇪🇺 EUR", GB: "🇬🇧 GBP", IN: "🇮🇳 INR" };
+
+function detectRegion(): string {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    if (/Asia\/(Kolkata|Calcutta)/.test(tz)) return "IN";
+    if (tz === "Europe/London") return "GB";
+    if (tz.startsWith("Europe/")) return "EU";
+    return "US"; // US + rest of world default to USD
+  } catch { return "US"; }
+}
+
+// price key per plan: a=Analytics, p=Privacy, c=Complete
+const PLANS = [
+  { key: "free", name: "Free", priceKey: "", highlight: false, cta: "Start free", sub: "10 files / month",
+    features: ["10 files every month", "Both tools — try everything", "Privacy scan & report", "Excel / CSV export"] },
+  { key: "a", name: "Analytics", priceKey: "a", highlight: false, cta: "Choose Analytics", sub: "the data scientist",
+    features: ["Unlimited dashboards", "All 12 industry engines", "Edit data & re-analyse", "Excel reports with charts", "Priority support"] },
+  { key: "p", name: "Privacy", priceKey: "p", highlight: false, cta: "Choose Privacy", sub: "the metadata suite",
+    features: ["Unlimited file scans", "Excel · PDF · Word · Photo · Video · Email", "Anonymize — keep data usable", "Privacy & Compliance reports", "Priority support"] },
+  { key: "c", name: "Complete", priceKey: "c", highlight: true, cta: "Get Complete", sub: "both tools · best value", badge: "Most popular",
+    features: ["Everything in Analytics", "Everything in Privacy", "One subscription, both tools", "Priority support"] },
 ];
 
 export default function Home() {
+  const [region, setRegion] = useState("US");
+  useEffect(() => { setRegion(detectRegion()); }, []);
+  const px = PRICE_TABLE[region] || PRICE_TABLE.US;
+  const savings = px.a + px.p - px.c;
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[#060611] text-slate-200">
 
@@ -313,43 +340,62 @@ export default function Home() {
 
       {/* ── Pricing ── */}
       <section id="pricing" className="relative z-10 px-6 py-24">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-16 text-center">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-10 text-center">
             <div className="mb-4 text-xs font-bold uppercase tracking-widest text-indigo-400">Pricing</div>
-            <h2 className="text-4xl font-black tracking-tight text-white">Start free. Upgrade when it pays off.</h2>
-            <p className="mt-4 text-slate-400">The scan is always free — pay only for advanced cleaning &amp; reports.</p>
+            <h2 className="text-4xl font-black tracking-tight text-white">Pay for what you need</h2>
+            <p className="mt-4 text-slate-400">Take just the analytics, just the privacy tools, or both for the best value. Start free.</p>
           </div>
-          <div className="grid items-start gap-6 md:grid-cols-3">
-            {PRICING.map(p => (
-              <div key={p.name} className={`relative rounded-2xl p-7 transition-all ${
-                p.highlight
-                  ? "border border-fuchsia-400/40 bg-gradient-to-b from-indigo-500/20 to-fuchsia-500/10 shadow-2xl shadow-fuchsia-500/30 md:scale-105"
-                  : "glass hover:border-white/20 hover:bg-white/[0.07]"}`}>
-                {p.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-fuchsia-500/50">Most popular</div>
-                )}
-                <div className={`mb-1 text-sm font-bold ${p.highlight ? "text-fuchsia-200" : "text-slate-400"}`}>{p.name}</div>
-                <div className="flex items-end gap-1">
-                  <div className="text-4xl font-black text-white">{p.price}</div>
-                  <div className={`mb-1.5 text-sm ${p.highlight ? "text-fuchsia-300/80" : "text-slate-500"}`}>{p.period}</div>
-                </div>
-                <ul className="my-7 space-y-3">
-                  {p.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-slate-300">
-                      <Check size={15} className={`mt-0.5 shrink-0 ${p.highlight ? "text-fuchsia-300" : "text-indigo-400"}`} /> {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link href="/app" className={`block rounded-xl py-3 text-center text-sm font-bold transition-all ${
-                  p.highlight
-                    ? "bg-white text-indigo-700 hover:bg-fuchsia-50"
-                    : "bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30 hover:shadow-fuchsia-500/50"}`}>
-                  {p.cta}
-                </Link>
-              </div>
+
+          {/* currency selector */}
+          <div className="mb-10 flex items-center justify-center gap-2">
+            <span className="text-xs text-slate-500">Currency:</span>
+            {Object.keys(REGION_LABEL).map(rk => (
+              <button key={rk} onClick={() => setRegion(rk)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${region === rk ? "bg-indigo-500/30 text-white ring-1 ring-indigo-400/50" : "text-slate-400 hover:text-white"}`}>
+                {REGION_LABEL[rk]}
+              </button>
             ))}
           </div>
-          <p className="mt-8 text-center text-xs text-slate-500">Prices in EUR, excl. VAT. Cancel anytime. Your files are never stored.</p>
+
+          <div className="grid items-start gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {PLANS.map(p => {
+              const amt = p.priceKey ? (px as any)[p.priceKey] as number : null;
+              return (
+                <div key={p.key} className={`relative rounded-2xl p-6 transition-all ${
+                  p.highlight
+                    ? "border border-fuchsia-400/40 bg-gradient-to-b from-indigo-500/20 to-fuchsia-500/10 shadow-2xl shadow-fuchsia-500/30 lg:scale-105"
+                    : "glass hover:border-white/20 hover:bg-white/[0.07]"}`}>
+                  {p.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-r from-indigo-500 to-fuchsia-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white shadow-lg shadow-fuchsia-500/50">{p.badge}</div>
+                  )}
+                  <div className={`text-sm font-bold ${p.highlight ? "text-fuchsia-200" : "text-slate-300"}`}>{p.name}</div>
+                  <div className="mb-3 text-[11px] text-slate-500">{p.sub}</div>
+                  <div className="flex items-end gap-1">
+                    <div className="text-3xl font-black text-white">{amt == null ? "Free" : `${px.cur}${amt.toLocaleString()}`}</div>
+                    {amt != null && <div className={`mb-1 text-xs ${p.highlight ? "text-fuchsia-300/80" : "text-slate-500"}`}>/mo</div>}
+                  </div>
+                  {p.key === "c" && savings > 0 && (
+                    <div className="mt-1 inline-block rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-300">save {px.cur}{savings.toLocaleString()} vs separate</div>
+                  )}
+                  <ul className="my-6 space-y-2.5">
+                    {p.features.map(f => (
+                      <li key={f} className="flex items-start gap-2 text-[13px] text-slate-300">
+                        <Check size={14} className={`mt-0.5 shrink-0 ${p.highlight ? "text-fuchsia-300" : "text-indigo-400"}`} /> {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link href="/app" className={`block rounded-xl py-2.5 text-center text-sm font-bold transition-all ${
+                    p.highlight
+                      ? "bg-white text-indigo-700 hover:bg-fuchsia-50"
+                      : "bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white shadow-lg shadow-fuchsia-500/30 hover:shadow-fuchsia-500/50"}`}>
+                    {p.cta}
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-8 text-center text-xs text-slate-500">{px.note} · prices auto-shown for your region · cancel anytime · your files are never stored.</p>
         </div>
       </section>
 
