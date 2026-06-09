@@ -64,6 +64,14 @@ const PRICE_TABLE: Record<string, { cur: string; a: number; p: number; c: number
 const REGION_LABEL: Record<string, string> = { US: "🌍 USD", EU: "🇪🇺 EUR", GB: "🇬🇧 GBP", IN: "🇮🇳 INR" };
 // The privacy law shown in the hero stat — matches the tool, named per region.
 const REGION_LAW_SHORT: Record<string, string> = { US: "CCPA", EU: "GDPR", GB: "UK GDPR", IN: "DPDP Act" };
+// Illustrative dashboard-preview numbers, shown in the visitor's own currency
+// (India uses crore, which is how big money is actually read there).
+const MOCK_KPI: Record<string, { rev: string; profit: string }> = {
+  US: { rev: "$4.82M",   profit: "$1.31M" },
+  EU: { rev: "€4.82M",   profit: "€1.31M" },
+  GB: { rev: "£3.90M",   profit: "£1.05M" },
+  IN: { rev: "₹38.6 Cr", profit: "₹10.5 Cr" },
+};
 
 function detectRegion(): string {
   try {
@@ -209,8 +217,8 @@ export default function Home() {
             <div className="p-8">
               <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
                 {[
-                  { label: "Total Revenue", value: "€4.82M", accent: "#818cf8", sub: "▲ 12% MoM" },
-                  { label: "Net Profit", value: "€1.31M", accent: "#34d399", sub: "27% margin" },
+                  { label: "Total Revenue", value: (MOCK_KPI[region] || MOCK_KPI.US).rev, accent: "#818cf8", sub: "▲ 12% MoM" },
+                  { label: "Net Profit", value: (MOCK_KPI[region] || MOCK_KPI.US).profit, accent: "#34d399", sub: "27% margin" },
                   { label: "Privacy score", value: "85/100", accent: "#fbbf24", sub: "2 risks" },
                   { label: "Alerts", value: "3", accent: "#f472b6", sub: "Needs attention" },
                 ].map(k => (
