@@ -434,6 +434,7 @@ export default function AppPage() {
   const [removeWords,    setRemoveWords]    = useState("");             // manual: words to blank (comma-separated)
   const [photoStrip,     setPhotoStrip]     = useState<any>({gps:true,camera:true,owner:true,date:true}); // image: what to remove
   const [proNotice,      setProNotice]      = useState("");   // metadata: clicked a Pro (locked) capability
+  const [typeErr,        setTypeErr]        = useState("");   // metadata: wrong file type for the chosen tab
   const [filters,        setFilters]        = useState<any>({});   // {col: {values:[...]} | {min,max}}
   const [file,           setFile]           = useState<File|null>(null);
   const [dragging,       setDragging]       = useState(false);
@@ -546,6 +547,15 @@ export default function AppPage() {
       URL.revokeObjectURL(url);
     }catch{ setError("Could not build the Excel report."); }
     finally{ setReporting(false); }
+  };
+
+  // Each metadata tab only accepts its own file type — reject mismatches clearly.
+  const pickTyped=(f:File|undefined|null, accept:string, label:string)=>{
+    if(!f) return;
+    const exts=accept.split(",").map(s=>s.trim().toLowerCase());
+    const ok=exts.some(ext=>f.name.toLowerCase().endsWith(ext));
+    if(!ok){ setTypeErr(`The ${label} tab only accepts ${accept.replace(/,/g,"  ")} files — "${f.name}" isn't one.`); return; }
+    setTypeErr(""); setProNotice(""); setFile(f);
   };
 
   const handleScrub=async()=>{
@@ -722,10 +732,15 @@ export default function AppPage() {
                           <t.Ic size={19} style={{color:t.c}} strokeWidth={2}/>
                         </div>
                         <span className="text-[13px] font-semibold text-slate-100">{t.label}</span>
-                        <input type="file" accept={t.accept} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
+                        <input type="file" accept={t.accept} className="hidden" onChange={e=>pickTyped(e.target.files?.[0], t.accept, t.label)}/>
                       </label>
                     ))}
                   </div>
+                  {typeErr&&(
+                    <div className="mt-3 p-3 rounded-xl text-xs text-red-200 flex items-center gap-2" style={{background:"rgba(248,113,113,0.12)",border:"1px solid rgba(248,113,113,0.30)"}}>
+                      <X size={13} className="text-red-300 shrink-0"/><span>{typeErr}</span>
+                    </div>
+                  )}
                   <div className="text-[11px] font-bold uppercase tracking-wider mt-4 mb-3 flex items-center gap-2 text-slate-400">
                     Advanced
                     <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full tracking-wide text-white" style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
