@@ -701,9 +701,34 @@ export default function AppPage() {
                   </div>
                   <span className="text-sm font-semibold text-slate-200">{pickViz.name}</span>
                 </div>
-                <h1 className="text-4xl font-black text-white tracking-tighter mb-2">Upload your data</h1>
-                <p className="text-slate-400 text-sm">{tool==="metadata"?"Excel · CSV · JSON · Photos (JPG / PNG)":"Excel · CSV · JSON · Any size"}</p>
+                <h1 className="text-4xl font-black text-white tracking-tighter mb-2">{tool==="metadata"?"Check what's hidden in your file":"Upload your data"}</h1>
+                <p className="text-slate-400 text-sm">{tool==="metadata"?"Excel · PDF · Word · PowerPoint · Photos — we find & remove hidden data":"Excel · CSV · JSON · Any size"}</p>
               </div>
+
+              {tool==="metadata"&&(
+                <div className="mb-6 rounded-2xl p-4" style={{border:"1px solid rgba(255,255,255,0.08)",background:"rgba(255,255,255,0.03)"}}>
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2.5">What we can check — included</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[{ic:"📊",label:"Excel / CSV"},{ic:"📄",label:"PDF"},{ic:"📝",label:"Word / PPT"},{ic:"📷",label:"Photos"}].map(t=>(
+                      <div key={t.label} className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-200"
+                        style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)"}}>
+                        <span>{t.ic}</span>{t.label}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-[11px] font-bold uppercase tracking-wide mt-3.5 mb-2.5 flex items-center gap-1.5 text-indigo-300/80">
+                    Advanced <span className="text-[9px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-200 tracking-normal">PRO</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[{ic:"🎥",label:"Video"},{ic:"🕵️",label:"Anonymize"},{ic:"⚖️",label:"GDPR report"},{ic:"📧",label:"Email / IP"}].map(t=>(
+                      <div key={t.label} title="Pro feature — coming with paid plans" className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-400"
+                        style={{background:"rgba(99,102,241,0.07)",border:"1px solid rgba(129,140,248,0.18)"}}>
+                        <span className="opacity-80">{t.ic}</span>{t.label}<span className="ml-auto text-[10px] opacity-70">🔒</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div onDragOver={e=>{e.preventDefault();setDragging(true);}} onDragLeave={()=>setDragging(false)} onDrop={handleDrop}
                 className={`rounded-2xl p-14 text-center transition-all border-2 border-dashed
                   ${dragging?"border-indigo-400 bg-indigo-500/10":file?"border-emerald-400 bg-emerald-500/10":"border-white/15 bg-white/[0.03] hover:border-white/30"}`}>
