@@ -746,16 +746,28 @@ export default function AppPage() {
                     <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full tracking-wide text-white" style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {[{Ic:VideoIcon,label:"Video"},{Ic:EyeOff,label:"Anonymize"},{Ic:ShieldCheck,label:"GDPR report"},{Ic:Mail,label:"Email / IP"}].map(t=>(
-                      <button key={t.label} onClick={()=>setProNotice(t.label)}
-                        className="relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all hover:-translate-y-0.5"
-                        style={{background:"linear-gradient(135deg,rgba(99,102,241,0.10),rgba(168,85,247,0.06))",border:"1px solid rgba(129,140,248,0.22)"}}>
-                        <Lock size={11} className="absolute top-2 right-2 text-indigo-300/60"/>
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:"rgba(129,140,248,0.16)"}}>
-                          <t.Ic size={19} className="text-indigo-300" strokeWidth={2}/>
-                        </div>
-                        <span className="text-[13px] font-semibold text-slate-300">{t.label}</span>
-                      </button>
+                    {[{Ic:VideoIcon,label:"Video",live:true,accept:".mp4,.mov,.m4v,.avi,.mkv,.webm"},{Ic:EyeOff,label:"Anonymize"},{Ic:ShieldCheck,label:"GDPR report"},{Ic:Mail,label:"Email / IP"}].map(t=>(
+                      t.live?(
+                        <label key={t.label} className="relative cursor-pointer flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all hover:-translate-y-0.5"
+                          style={{background:"linear-gradient(135deg,rgba(99,102,241,0.14),rgba(168,85,247,0.10))",border:"1px solid rgba(129,140,248,0.35)"}}>
+                          <span className="absolute top-2 right-2 text-[8px] font-extrabold px-1.5 py-0.5 rounded-full text-white" style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:"rgba(129,140,248,0.20)"}}>
+                            <t.Ic size={19} className="text-indigo-200" strokeWidth={2}/>
+                          </div>
+                          <span className="text-[13px] font-semibold text-slate-100">{t.label}</span>
+                          <input type="file" accept={t.accept} className="hidden" onChange={e=>pickTyped(e.target.files?.[0], t.accept!, t.label)}/>
+                        </label>
+                      ):(
+                        <button key={t.label} onClick={()=>setProNotice(t.label)}
+                          className="relative flex flex-col items-center gap-2 px-3 py-4 rounded-xl transition-all hover:-translate-y-0.5"
+                          style={{background:"linear-gradient(135deg,rgba(99,102,241,0.10),rgba(168,85,247,0.06))",border:"1px solid rgba(129,140,248,0.22)"}}>
+                          <Lock size={11} className="absolute top-2 right-2 text-indigo-300/60"/>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{background:"rgba(129,140,248,0.16)"}}>
+                            <t.Ic size={19} className="text-indigo-300" strokeWidth={2}/>
+                          </div>
+                          <span className="text-[13px] font-semibold text-slate-300">{t.label}</span>
+                        </button>
+                      )
                     ))}
                   </div>
                   {proNotice&&(
@@ -793,7 +805,7 @@ export default function AppPage() {
                     <div className="text-sm text-slate-400 mb-5">or click to browse</div>
                     <label className="cursor-pointer inline-flex items-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl text-sm bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/30">
                       <UploadCloud size={16}/> Browse files
-                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif,.pdf,.docx,.pptx":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
+                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif,.pdf,.docx,.pptx,.mp4,.mov,.m4v,.avi,.mkv,.webm":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
                     </label>
                   </div>
                 )}
@@ -1124,7 +1136,7 @@ export default function AppPage() {
                           </div>
 
                           {/* Action area — image vs spreadsheet */}
-                          {footprint.kind==="image"?(
+                          {(footprint.kind==="image"||footprint.kind==="video")?(
                             <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
                               {footprint.story&&(
                                 <div className="mb-3 p-2.5 rounded-lg text-xs text-slate-200 leading-relaxed" style={{background:"rgba(99,102,241,0.10)",border:"1px solid rgba(129,140,248,0.25)"}}>
@@ -1134,7 +1146,7 @@ export default function AppPage() {
                               {footprint.maps&&(
                                 <a href={footprint.maps} target="_blank" rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300 hover:text-indigo-200 mb-3">
-                                  📍 See exactly where this photo was taken (Google Maps) →
+                                  📍 See exactly where this {footprint.kind==="video"?"video was filmed":"photo was taken"} (Google Maps) →
                                 </a>
                               )}
                               {footprint.details&&Object.keys(footprint.details).length>0&&(
@@ -1157,7 +1169,18 @@ export default function AppPage() {
                                   <div className="text-[10px] text-slate-400 mt-1.5">A cropped/edited photo can still secretly carry the full original. Cleaning removes it.</div>
                                 </div>
                               )}
-                              {(footprint.categories_present||[]).length>0?(
+                              {footprint.kind==="video"?(
+                                (footprint.categories_present||[]).length>0?(
+                                  <>
+                                    <button onClick={handleScrub} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-lg" style={{background:"#10b981"}}>
+                                      <Sparkles size={12}/> Clean up &amp; download video
+                                    </button>
+                                    <p className="mt-2 text-[10px] text-slate-500">Removes all hidden data (GPS, device, date). The video is identical quality (no re-encode). Nothing is stored on our servers.</p>
+                                  </>
+                                ):(
+                                  <p className="text-[11px] text-slate-400">This video has no hidden metadata to remove — it's already safe to share.</p>
+                                )
+                              ):(footprint.categories_present||[]).length>0?(
                                 <>
                                   <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-2">Choose what to remove</div>
                                   <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 mb-3">
