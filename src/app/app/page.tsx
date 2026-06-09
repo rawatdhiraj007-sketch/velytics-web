@@ -1059,11 +1059,36 @@ export default function AppPage() {
                           {/* Action area — image vs spreadsheet */}
                           {footprint.kind==="image"?(
                             <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+                              {footprint.story&&(
+                                <div className="mb-3 p-2.5 rounded-lg text-xs text-slate-200 leading-relaxed" style={{background:"rgba(99,102,241,0.10)",border:"1px solid rgba(129,140,248,0.25)"}}>
+                                  🧠 {footprint.story}
+                                </div>
+                              )}
                               {footprint.maps&&(
                                 <a href={footprint.maps} target="_blank" rel="noopener noreferrer"
                                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-300 hover:text-indigo-200 mb-3">
                                   📍 See exactly where this photo was taken (Google Maps) →
                                 </a>
+                              )}
+                              {footprint.details&&Object.keys(footprint.details).length>0&&(
+                                <div className="mb-3">
+                                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">Technical details</div>
+                                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                                    {Object.entries(footprint.details).map(([k,v]:any)=>(
+                                      <div key={k} className="flex justify-between gap-2 text-[11px]">
+                                        <span className="text-slate-500">{k}</span>
+                                        <span className="text-slate-200 font-semibold text-right truncate">{String(v)}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {footprint.thumbnail&&(
+                                <div className="mb-3 p-2.5 rounded-lg" style={{background:"rgba(248,113,113,0.10)",border:"1px solid rgba(248,113,113,0.30)"}}>
+                                  <div className="text-[11px] font-bold text-red-300 mb-1.5">⚠️ Hidden thumbnail of the original found</div>
+                                  <img src={footprint.thumbnail} alt="hidden thumbnail" className="rounded-md max-h-24 border border-white/10"/>
+                                  <div className="text-[10px] text-slate-400 mt-1.5">A cropped/edited photo can still secretly carry the full original. Cleaning removes it.</div>
+                                </div>
                               )}
                               {(footprint.categories_present||[]).length>0?(
                                 <>
