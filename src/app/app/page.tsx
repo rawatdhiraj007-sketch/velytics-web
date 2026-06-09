@@ -429,7 +429,7 @@ export default function AppPage() {
   const [step,           setStep]           = useState<Step>("module");
   const [selectedModule, setSelectedModule] = useState<string|null>(null);
   const [tool,           setTool]           = useState<"metadata"|"analyze"|null>(null);
-  const [scrubOpts,      setScrubOpts]      = useState<any>({identity:true,hidden_sheets:true,comments:true,unhide:true,redact_pii:true});
+  const [scrubOpts,      setScrubOpts]      = useState<any>({identity:true,hidden_sheets:true,comments:true,unhide:true,redact_pii:true,anonymize:false});
   const [removeCols,     setRemoveCols]     = useState<string[]>([]);   // manual: columns to delete
   const [removeWords,    setRemoveWords]    = useState("");             // manual: words to blank (comma-separated)
   const [photoStrip,     setPhotoStrip]     = useState<any>({gps:true,camera:true,owner:true,date:true}); // image: what to remove
@@ -1247,6 +1247,17 @@ export default function AppPage() {
                                 </label>
                               ))}
                             </div>
+                            {Object.keys(footprint.pii||{}).length>0&&(
+                              <label className="mt-2 flex items-start gap-2 text-xs text-slate-200 cursor-pointer p-2.5 rounded-lg" style={{background:"linear-gradient(135deg,rgba(99,102,241,0.10),rgba(168,85,247,0.06))",border:"1px solid rgba(129,140,248,0.25)"}}>
+                                <input type="checkbox" className="mt-0.5" checked={!!scrubOpts.anonymize} onChange={e=>setScrubOpts({...scrubOpts,anonymize:e.target.checked})}/>
+                                <span>
+                                  <span className="font-semibold text-white flex items-center gap-1.5">Anonymize personal data
+                                    <span className="text-[8px] font-extrabold px-1.5 py-0.5 rounded-full text-white" style={{background:"linear-gradient(110deg,#6366f1,#a855f7)"}}>PRO</span>
+                                  </span>
+                                  <span className="text-[11px] text-slate-400">Replace names/emails/IDs with consistent fake values (Person 1, user1@…) — the sheet stays fully usable for analysis, just anonymous.</span>
+                                </span>
+                              </label>
+                            )}
 
                             {/* Your own choices — manual control (the client knows their context) */}
                             <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
