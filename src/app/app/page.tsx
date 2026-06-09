@@ -429,6 +429,8 @@ export default function AppPage() {
   const [selectedModule, setSelectedModule] = useState<string|null>(null);
   const [tool,           setTool]           = useState<"metadata"|"analyze"|null>(null);
   const [scrubOpts,      setScrubOpts]      = useState<any>({identity:true,hidden_sheets:true,comments:true,unhide:true,redact_pii:true});
+  const [removeCols,     setRemoveCols]     = useState<string[]>([]);   // manual: columns to delete
+  const [removeWords,    setRemoveWords]    = useState("");             // manual: words to blank (comma-separated)
   const [filters,        setFilters]        = useState<any>({});   // {col: {values:[...]} | {min,max}}
   const [file,           setFile]           = useState<File|null>(null);
   const [dragging,       setDragging]       = useState(false);
@@ -548,6 +550,8 @@ export default function AppPage() {
     try{
       const form=new FormData(); form.append("file",file);
       Object.entries(scrubOpts).forEach(([k,v])=>form.append(k, v?"true":"false"));
+      form.append("remove_columns", JSON.stringify(removeCols));
+      form.append("remove_words", JSON.stringify(removeWords.split(",").map(w=>w.trim()).filter(Boolean)));
       const res=await fetch(`${API}/scrub`,{method:"POST",body:form});
       if(!res.ok) throw new Error("Scrub failed");
       const blob=await res.blob();
@@ -848,7 +852,7 @@ export default function AppPage() {
                 </div>
               </div>
               <div className="p-4" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
-                <button onClick={()=>{setStep("module");setFile(null);setTool(null);setSelectedModule(null);setData(null);setActiveTab("overview");setSheet("");setFilters({});setEdits([]);setFocus(null);setCleanOpts({blanks:"leave"});}}
+                <button onClick={()=>{setStep("module");setFile(null);setTool(null);setSelectedModule(null);setData(null);setActiveTab("overview");setSheet("");setFilters({});setEdits([]);setFocus(null);setCleanOpts({blanks:"leave"});setRemoveCols([]);setRemoveWords("");}}
                   className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-xl transition-all hover:bg-indigo-50 hover:text-indigo-600 text-slate-400"
                   style={{border:"1px solid rgba(255,255,255,0.14)"}}>
                   <ArrowLeft size={12}/> New analysis
@@ -998,6 +1002,23 @@ export default function AppPage() {
                       </div>
                     )}
 
+                    {/* GDPR plain-English verdict */}
+                    {tool==="metadata"&&footprint?.gdpr&&(()=>{
+                      const lv=footprint.gdpr.level;
+                      const acc=lv==="high"?"#f87171":lv==="medium"?"#fbbf24":"#34d399";
+                      return (
+                        <div className="rounded-2xl p-4 flex items-start gap-3" style={{border:`1px solid ${acc}40`,background:`${acc}14`,backdropFilter:"blur(8px)"}}>
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-md shrink-0 mt-0.5" style={{background:`${acc}26`,color:acc}}>GDPR</span>
+                          <div>
+                            <div className="text-sm font-semibold text-white">{footprint.gdpr.verdict}</div>
+                            <div className="text-[11px] text-slate-300 mt-1">
+                              {footprint.gdpr.categories?.length>0?`Personal data found: ${footprint.gdpr.categories.join(", ")}. `:""}{footprint.gdpr.advice}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {/* Metadata (Privacy) tool: hidden-footprint report */}
                     {tool==="metadata"&&footprint&&(
                       <div className="bg-white rounded-2xl p-5 grid md:grid-cols-[190px_1fr] gap-6 items-center"
@@ -1047,6 +1068,30 @@ export default function AppPage() {
                                   {o.label}
                                 </label>
                               ))}
+                            </div>
+
+                            {/* Your own choices — manual control (the client knows their context) */}
+                            <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+                              <div className="text-[11px] font-bold text-indigo-300 uppercase tracking-wide mb-2">Your own choices</div>
+                              {data?.metadata?.length>0&&(
+                                <div className="mb-2.5">
+                                  <div className="text-[11px] text-slate-400 mb-1.5">Remove entire columns (click to toggle):</div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {data.metadata.map((m:any)=>{ const on=removeCols.includes(m.column); return (
+                                      <button key={m.column} onClick={()=>setRemoveCols(on?removeCols.filter((c:string)=>c!==m.column):[...removeCols,m.column])}
+                                        className="text-[11px] font-semibold px-2 py-1 rounded-md transition-all"
+                                        style={on?{background:"#f87171",color:"#fff"}:{border:"1px solid rgba(255,255,255,0.14)",color:"#cbd5e1"}}>
+                                        {on?"✕ ":""}{m.column}
+                                      </button>); })}
+                                  </div>
+                                </div>
+                              )}
+                              <div>
+                                <div className="text-[11px] text-slate-400 mb-1.5">Remove any cell containing these words:</div>
+                                <input value={removeWords} onChange={e=>setRemoveWords(e.target.value)} placeholder="e.g. Confidential, Project Falcon"
+                                  className="w-full text-xs px-3 py-2 rounded-lg bg-transparent text-slate-200 outline-none focus:bg-white/5"
+                                  style={{border:"1px solid rgba(255,255,255,0.14)"}}/>
+                              </div>
                             </div>
                             {file?.name.toLowerCase().endsWith(".xlsx")?(
                               <button onClick={handleScrub} className="mt-3 w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-lg" style={{background:"#10b981"}}>
