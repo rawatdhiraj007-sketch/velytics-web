@@ -885,11 +885,13 @@ export default function AppPage() {
             <aside className="w-52 shrink-0 flex flex-col" style={{background:"rgba(13,16,28,0.5)",backdropFilter:"blur(16px)",borderRight:"1px solid rgba(255,255,255,0.08)"}}>
               <div className="p-4" style={{borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{background:typeViz.bg}}>
-                    <typeViz.Icon size={15} style={{color:typeViz.color}} strokeWidth={2}/>
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={tool==="metadata"?{background:"#10b98122"}:{background:typeViz.bg}}>
+                    {tool==="metadata"
+                      ? <ShieldCheck size={15} style={{color:"#10b981"}} strokeWidth={2}/>
+                      : <typeViz.Icon size={15} style={{color:typeViz.color}} strokeWidth={2}/>}
                   </div>
                   <div>
-                    <div className="text-xs font-black text-white">{detected}</div>
+                    <div className="text-xs font-black text-white">{tool==="metadata"?"Privacy":detected}</div>
                     <div className="text-xs text-slate-400">{tool==="metadata"?"Metadata":"Analyze"}</div>
                   </div>
                 </div>
@@ -988,12 +990,12 @@ export default function AppPage() {
               <div className="px-7 py-4 flex items-center justify-between shrink-0" style={{background:"rgba(13,16,28,0.6)",backdropFilter:"blur(16px)",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
                 <div>
                   <div className="flex items-center gap-2 mb-0.5">
-                    <h1 className="text-base font-black text-white">{tool==="metadata"?`${detected} — Metadata`:`${detected} Report`}</h1>
+                    <h1 className="text-base font-black text-white">{tool==="metadata"?"Privacy & Metadata":`${detected} Report`}</h1>
                     <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-50 text-green-700 border border-green-100">
                       {loading?"Updating...":"Live"}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-400">{detected} · {data?.rows} rows · {data?.columns} cols</p>
+                  <p className="text-xs text-slate-400">{tool==="metadata"?(data?.file||detected):`${detected} · ${data?.rows} rows · ${data?.columns} cols`}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={()=>handleFilter()} disabled={loading}
