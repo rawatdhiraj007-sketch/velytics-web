@@ -727,7 +727,7 @@ export default function AppPage() {
                     <div className="text-sm text-slate-400 mb-5">or click to browse</div>
                     <label className="cursor-pointer inline-flex items-center gap-2 text-white font-semibold px-5 py-2.5 rounded-xl text-sm bg-gradient-to-r from-indigo-500 to-fuchsia-500 shadow-lg shadow-fuchsia-500/30">
                       <UploadCloud size={16}/> Browse files
-                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif,.pdf":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
+                      <input type="file" accept={tool==="metadata"?".xlsx,.csv,.json,.jpg,.jpeg,.png,.tif,.tiff,.webp,.bmp,.heic,.heif,.pdf,.docx,.pptx":".xlsx,.csv,.json"} className="hidden" onChange={e=>e.target.files?.[0]&&setFile(e.target.files[0])}/>
                     </label>
                   </div>
                 )}
@@ -1113,7 +1113,7 @@ export default function AppPage() {
                                 <p className="text-[11px] text-slate-400">This photo has no hidden metadata to remove — it's already safe to share.</p>
                               )}
                             </div>
-                          ):footprint.kind==="pdf"?(
+                          ):(footprint.kind==="pdf"||footprint.kind==="document")?(
                             <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
                               {footprint.details&&Object.keys(footprint.details).length>0&&(
                                 <div className="mb-3">
@@ -1128,12 +1128,17 @@ export default function AppPage() {
                                   </div>
                                 </div>
                               )}
-                              {file?.name.toLowerCase().endsWith(".pdf")&&(
+                              {/\.(pdf|docx|pptx)$/i.test(file?.name||"")&&(
                                 <button onClick={handleScrub} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-white px-3 py-2 rounded-lg" style={{background:"#10b981"}}>
-                                  <Sparkles size={12}/> Download cleaned PDF
+                                  <Sparkles size={12}/> Download cleaned file
                                 </button>
                               )}
-                              <p className="mt-2 text-[10px] text-slate-500">Removes document info (author/software), JavaScript, attachments &amp; annotations. ⚠️ Blacked-out (failed-redaction) text can't be auto-fixed — re-do the redaction in your PDF editor. Nothing is stored on our servers.</p>
+                              <p className="mt-2 text-[10px] text-slate-500">
+                                {footprint.kind==="pdf"
+                                  ? "Removes document info (author/software), JavaScript, attachments & annotations. ⚠️ Blacked-out (failed-redaction) text can't be auto-fixed — re-do it in your PDF editor."
+                                  : "Removes author, company & edit-history. ⚠️ Tracked changes & comments are flagged above — clear those in your editor (Accept all changes / Delete comments)."}
+                                {" "}Nothing is stored on our servers.
+                              </p>
                             </div>
                           ):(
                           <div className="mt-3 pt-3" style={{borderTop:"1px solid rgba(255,255,255,0.08)"}}>
