@@ -474,6 +474,37 @@ export default function AppPage() {
   const [focus,          setFocus]          = useState<{title:string;rows:any[]}|null>(null);   // zoom modal
   const [edits,          setEdits]          = useState<{row:number;col:string;value:any}[]>([]); // manual corrections
   const [cleanOpts,      setCleanOpts]      = useState<any>({blanks:"leave"});   // cleaning-with-approval choices
+  const [wakeMsg,        setWakeMsg]        = useState<string|null>(null);       // friendly "server waking up" notice
+
+  // The free-tier backend sleeps when idle, so the first request can take ~50s.
+  // Wrap fetch: show a friendly "waking up" message after a short delay, and
+  // auto-retry on cold-start failures — so a sleeping server never looks broken.
+  const sleep=(ms:number)=>new Promise(r=>setTimeout(r,ms));
+  const apiFetch=async(path:string, init:RequestInit, retries=2):Promise<Response>=>{
+    let slow:any;
+    const armSlow=()=>{ slow=setTimeout(()=>setWakeMsg("Waking up the server — on the free plan it naps when idle, so the first run can take up to ~50 seconds. Hang tight…"), 4000); };
+    for(let attempt=0; attempt<=retries; attempt++){
+      try{
+        armSlow();
+        const res=await fetch(`${API}${path}`, init);
+        clearTimeout(slow);
+        if([502,503,504].includes(res.status) && attempt<retries){
+          setWakeMsg("Server is still starting up — retrying…"); await sleep(3000); continue;
+        }
+        setWakeMsg(null);
+        return res;
+      }catch(err){
+        clearTimeout(slow);
+        if(attempt<retries){
+          setWakeMsg("Waking up the server — retrying (this can take ~50s on the free plan)…"); await sleep(3000); continue;
+        }
+        setWakeMsg(null);
+        throw err;
+      }
+    }
+    setWakeMsg(null);
+    throw new Error("Server unreachable");
+  };
 
   const handleDrop=useCallback((e:React.DragEvent)=>{
     e.preventDefault();setDragging(false);
@@ -491,7 +522,7 @@ export default function AppPage() {
       form.append("edits",JSON.stringify(edts||[]));
       form.append("clean_options",JSON.stringify(copts||{}));
       if(tool==="analyze"&&selectedModule) form.append("module",selectedModule); // chosen industry forces its pack
-      const res=await fetch(`${API}/analyze`,{method:"POST",body:form});
+      const res=await apiFetch(`/analyze`,{method:"POST",body:form});
       if(!res.ok){const e=await res.json();throw new Error(e.detail||"Analysis failed");}
       const json=await res.json();
       setData(json);
@@ -540,7 +571,7 @@ export default function AppPage() {
     try{
       const form=new FormData();
       form.append("file",file); form.append("sheet",sheet); form.append("fmt",fmtType);
-      const res=await fetch(`${API}/download`,{method:"POST",body:form});
+      const res=await apiFetch(`/download`,{method:"POST",body:form});
       if(!res.ok) throw new Error("Download failed");
       const blob=await res.blob();
       const url=URL.createObjectURL(blob);
@@ -562,7 +593,7 @@ export default function AppPage() {
       form.append("edits",JSON.stringify(edits||[]));
       form.append("clean_options",JSON.stringify(cleanOpts||{}));
       if(tool==="analyze"&&selectedModule) form.append("module",selectedModule);
-      const res=await fetch(`${API}/report`,{method:"POST",body:form});
+      const res=await apiFetch(`/report`,{method:"POST",body:form});
       if(!res.ok) throw new Error("Report failed");
       const blob=await res.blob();
       const url=URL.createObjectURL(blob);
@@ -594,7 +625,7 @@ export default function AppPage() {
     try{
       const form=new FormData(); form.append("file",file);
       form.append("law", law.short); form.append("law_full", law.full);
-      const res=await fetch(`${API}/privacy-report`,{method:"POST",body:form});
+      const res=await apiFetch(`/privacy-report`,{method:"POST",body:form});
       if(!res.ok) throw new Error();
       const cd=res.headers.get("content-disposition")||"";
       const fn=/filename="?([^"]+)"?/.exec(cd)?.[1];
@@ -613,7 +644,7 @@ export default function AppPage() {
       form.append("remove_columns", JSON.stringify(removeCols));
       form.append("remove_words", JSON.stringify(removeWords.split(",").map(w=>w.trim()).filter(Boolean)));
       form.append("strip_categories", JSON.stringify(Object.keys(photoStrip).filter(k=>photoStrip[k])));
-      const res=await fetch(`${API}/scrub`,{method:"POST",body:form});
+      const res=await apiFetch(`/scrub`,{method:"POST",body:form});
       if(!res.ok) throw new Error("Scrub failed");
       const cd=res.headers.get("content-disposition")||"";
       const fromHdr=/filename="?([^"]+)"?/.exec(cd)?.[1];
@@ -662,6 +693,15 @@ export default function AppPage() {
   const dark = true;   // whole app matches the landing's dark aurora/glass
   return (
     <div className="relative min-h-screen" style={{background:"#060611"}}>
+
+      {/* Cold-start toast — free backend waking up (shown for any in-flight call) */}
+      {wakeMsg&&step!=="analysing"&&(
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[60] max-w-md w-[90%] flex items-start gap-2.5 px-4 py-3 rounded-xl text-sm text-amber-100"
+          style={{background:"rgba(120,80,10,0.85)",border:"1px solid rgba(251,191,36,0.35)",backdropFilter:"blur(12px)",boxShadow:"0 8px 30px rgba(0,0,0,0.4)"}}>
+          <span className="animate-spin shrink-0 mt-0.5">⚙️</span>
+          <span>{wakeMsg}</span>
+        </div>
+      )}
 
       {/* Aurora background — onboarding steps only */}
       {dark&&(
@@ -902,6 +942,7 @@ export default function AppPage() {
               <div className="w-16 h-16 border-4 border-white/10 border-t-fuchsia-400 rounded-full animate-spin mx-auto mb-8"/>
               <h2 className="text-2xl font-black text-white mb-2">{tool==="metadata"?"Reading your data":"Analysing your data"}</h2>
               <p className="text-slate-400 text-sm">{tool==="metadata"?"Mapping every column & checking quality":"Crunching the numbers"}</p>
+              {wakeMsg&&<p className="text-amber-200 text-sm mt-4 bg-amber-500/10 border border-amber-400/20 px-4 py-3 rounded-xl max-w-md mx-auto">⚙️ {wakeMsg}</p>}
               {error&&<p className="text-red-300 text-sm mt-4 bg-red-500/10 px-4 py-2 rounded-lg">{error}</p>}
             </div>
           </div>
