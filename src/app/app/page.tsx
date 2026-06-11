@@ -968,6 +968,20 @@ export default function AppPage() {
                 </div>
               </div>
               <div className="p-4 flex-1 overflow-auto space-y-5">
+                {/* Sheet selector — prominent, since picking the right sheet matters most */}
+                {data?.sheets?.length>1&&(
+                  <div className="rounded-xl p-3" style={{background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.35)"}}>
+                    <label className="flex items-center gap-1.5 text-xs font-bold text-indigo-200 mb-1.5">
+                      <Table2 size={13}/> Sheet to analyse
+                    </label>
+                    <select value={data.sheet_used} onChange={e=>handleSheet(e.target.value)}
+                      className="w-full text-xs font-semibold rounded-lg px-2.5 py-2 cursor-pointer focus:outline-none"
+                      style={{border:"1px solid rgba(99,102,241,0.5)",background:"rgba(13,16,28,0.6)",color:"#e0e7ff"}}>
+                      {data.sheets.map((s:string)=><option key={s} value={s} style={{background:"#0d101c",color:"#e0e7ff"}}>{s}</option>)}
+                    </select>
+                    <p className="text-[10px] text-indigo-300/70 mt-1.5">{data.sheets.length} sheets in this file — switch to see another sheet&apos;s results.</p>
+                  </div>
+                )}
                 {/* Dynamic filters — built from the sheet's real columns */}
                 {(() => {
                   const fs:any[] = (data?.filter_schema||[]).filter((f:any)=>f.type==="category"||f.type==="date");
@@ -1015,16 +1029,6 @@ export default function AppPage() {
                     </div>
                   );
                 })()}
-                {data?.sheets?.length>1&&(
-                  <div>
-                    <label className="text-xs font-semibold text-slate-400 block mb-1.5">Sheet ({data.sheets.length})</label>
-                    <select value={data.sheet_used} onChange={e=>handleSheet(e.target.value)}
-                      className="w-full text-xs rounded-lg px-2.5 py-2 cursor-pointer focus:outline-none"
-                      style={{border:"1px solid rgba(255,255,255,0.14)",background:"rgba(255,255,255,0.05)",color:"#cbd5e1"}}>
-                      {data.sheets.map((s:string)=><option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-                )}
                 <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",paddingTop:"1.25rem"}}>
                   <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Dataset</div>
                   <div className="rounded-xl p-3 space-y-2" style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.08)"}}>
